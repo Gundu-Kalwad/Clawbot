@@ -1,17 +1,20 @@
 name: OpenClaw Verification Test
-on: workflow_dispatch # Manual trigger from Actions tab
+on: workflow_dispatch
 
 jobs:
   test-bot:
     runs-on: ubuntu-latest
     steps:
-      - name: Install Node.js 22
-        run: |
-          curl -fsSL https://deb.nodesource.com | sudo -E bash -
-          sudo apt-get install -y nodejs
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
 
       - name: Install OpenClaw
-        run: curl -fsSL https://openclaw.bot/install.sh | bash
+        run: curl -fsSL https://openclaw.bot | bash
 
       - name: Start OpenClaw & Tunnel
         run: |
@@ -19,10 +22,9 @@ jobs:
           openclaw gateway start & 
           
           # Wait for the gateway to initialize on port 18789
-          sleep 10
+          sleep 15
           
-          # Create the Pinggy tunnel. 
-          # Use 'qr@' to get a scannable QR code in your GitHub Action logs.
+          # Pinggy tunnel with QR code generation in logs
           ssh -p 443 -o StrictHostKeyChecking=no -o ServerAliveInterval=30 \
               -R0:localhost:18789 qr@free.pinggy.io
               
