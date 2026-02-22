@@ -14,22 +14,21 @@ jobs:
           node-version: 22
 
       - name: Install OpenClaw
-        # Added '|| true' to ignore the TTY/onboarding exit code 1
-        run: curl -fsSL https://openclaw.ai | bash || true
+        # Using -g and forcing the install to ensure binary availability
+        run: npm install -g openclaw@latest
 
       - name: Start OpenClaw & Tunnel
         env:
-          # Use this password to log in to the web dashboard
-          SETUP_PASSWORD: "admin" 
+          SETUP_PASSWORD: "admin"
         run: |
-          # 1. Initialize the gateway in background
-          openclaw gateway start & 
+          # Use npx to start the gateway directly. 
+          # This fixes the "command not found" error.
+          npx openclaw gateway start & 
           
-          # 2. Wait 30 seconds for the server to spin up on port 18789
+          # Wait 30 seconds for the server to spin up
           sleep 30
           
-          # 3. Create the Pinggy tunnel. 
-          # Look for the URL and QR code in the Action logs!
+          # Create the Pinggy tunnel
           ssh -p 443 -o StrictHostKeyChecking=no -o ServerAliveInterval=30 \
               -R0:localhost:18789 qr@free.pinggy.io
               
