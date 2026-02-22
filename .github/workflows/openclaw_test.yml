@@ -14,17 +14,17 @@ jobs:
           node-version: 22
 
       - name: Install OpenClaw
-        run: curl -fsSL https://openclaw.bot | bash
+        run: curl -fsSL https://openclaw.ai/install.sh | bash
 
       - name: Start OpenClaw & Tunnel
         run: |
-          # Start the gateway in the background
+          # Start the gateway in background
           openclaw gateway start & 
           
-          # Wait for the gateway to initialize on port 18789
-          sleep 15
+          # Wait for the service to bind to port 18789
+          sleep 20
           
-          # Pinggy tunnel with QR code generation in logs
+          # Pinggy tunnel: 'qr@' generates a scannable QR in your logs
           ssh -p 443 -o StrictHostKeyChecking=no -o ServerAliveInterval=30 \
               -R0:localhost:18789 qr@free.pinggy.io
               
