@@ -13,36 +13,48 @@ jobs:
       GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
 
     steps:
-      - name: Install Node 22
+      - name: Setup Node 22
         uses: actions/setup-node@v4
         with:
           node-version: '22'
 
-      - name: Install OpenClaw
-        run: curl -fsSL https://openclaw.ai/install.sh | bash
+      - name: Install OpenClaw (skip onboarding)
+        run: curl -fsSL https://openclaw.ai/install.sh | bash -s -- --no-onboard
 
       - name: Add openclaw to PATH
-        run: echo "$(npm prefix -g)/bin" >> $GITHUB_PATH
+        run: echo "$HOME/.npm-global/bin" >> $GITHUB_PATH
 
-      - name: Configure Telegram channel
-        run: openclaw channels add --channel telegram --token $TELEGRAM_BOT_TOKEN
+      - name: Run non-interactive onboarding with Groq
+        run: |
+          openclaw onboard \
+            --non-interactive \
+            --mode local \
+            --auth-choice skip \
+            --gateway-port 18789 \
+            --gateway-bind loopback \
+            --skip-skills
 
-      - name: Set Groq as default model
-        run: openclaw config set agents.defaults.model.primary "groq/llama-3.3-70b-versatile"
+      - name: Set Groq as primary model
+        run: openclaw models set groq/llama-3.3-70b-versatile
+
+      - name: Add Telegram channel
+        run: |
+          openclaw channels add \
+            --channel telegram \
+            --token $TELEGRAM_BOT_TOKEN
 
       - name: Start gateway
         run: openclaw gateway start
 
-      - name: Check health
+      - name: Health check
         run: |
           sleep 10
           openclaw health
-          openclaw status
 
       - name: Keep alive for testing
         run: |
           echo "Bot is live. Message your Telegram bot now."
-          sleep 1800  # 30 min, change to 21600 for full 6 hours
+          sleep 1800
 
       - name: Logs on exit
         if: always()
