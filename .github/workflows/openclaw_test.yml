@@ -42,13 +42,10 @@ jobs:
         run: cat ~/.openclaw/openclaw.json
 
       - name: Start gateway in background
-        run: nohup openclaw gateway start > /tmp/openclaw.log 2>&1 &
+        run: nohup openclaw gateway --allow-unconfigured > /tmp/openclaw.log 2>&1 &
 
       - name: Wait for gateway to be ready
         run: sleep 15
-
-      - name: Apply doctor fixes
-        run: openclaw doctor --fix || true
 
       - name: Health check
         run: openclaw health
