@@ -24,32 +24,32 @@ jobs:
       - name: Add openclaw to PATH
         run: echo "$HOME/.npm-global/bin" >> $GITHUB_PATH
 
-      - name: Run non-interactive onboarding
+      - name: Run non-interactive onboarding with Groq via custom provider
         run: |
           openclaw onboard \
             --non-interactive \
             --accept-risk \
             --mode local \
-            --auth-choice skip \
+            --auth-choice custom-api-key \
+            --custom-base-url "https://api.groq.com/openai/v1" \
+            --custom-model-id "llama-3.3-70b-versatile" \
+            --custom-api-key "$GROQ_API_KEY" \
+            --custom-compatibility openai \
             --gateway-port 18789 \
-            --gateway-bind loopback \
-            --skip-skills \
-            --no-start
-
-      - name: Set Groq as primary model
-        run: openclaw config set agents.defaults.model.primary "groq/llama-3.3-70b-versatile"
+            --gateway-bind loopback
 
       - name: Add Telegram channel
         run: |
-          openclaw config set channels.telegram.enabled true
-          openclaw config set channels.telegram.botToken "$TELEGRAM_BOT_TOKEN"
-          openclaw config set channels.telegram.dmPolicy "pairing"
+          openclaw channels add \
+            --channel telegram \
+            --token "$TELEGRAM_BOT_TOKEN" \
+            --non-interactive
 
       - name: Start gateway in background
-        run: |
-          nohup openclaw gateway start > /tmp/openclaw-gateway.log 2>&1 &
-          echo "Gateway PID: $!"
-          sleep 15
+        run: nohup openclaw gateway start > /tmp/openclaw.log 2>&1 &
+
+      - name: Wait for gateway to be ready
+        run: sleep 15
 
       - name: Health check
         run: openclaw health
@@ -63,4 +63,4 @@ jobs:
         if: always()
         run: |
           openclaw logs --limit 100 || true
-          cat /tmp/openclaw-gateway.log || true
+          cat /tmp/openclaw.log || true
