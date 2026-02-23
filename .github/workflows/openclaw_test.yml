@@ -51,8 +51,9 @@ jobs:
             --gateway-port 18789 \
             --gateway-bind loopback || true
 
-      - name: Fix dmPolicy and Node 22 polling issue
+      - name: Configure Telegram and fix Node 22 polling
         run: |
+          openclaw config set channels.telegram.botToken "$TELEGRAM_BOT_TOKEN"
           openclaw config set channels.telegram.allowFrom '["*"]'
           openclaw config set channels.telegram.dmPolicy "open"
           openclaw config set channels.telegram.network.autoSelectFamily false
@@ -65,7 +66,7 @@ jobs:
 
       - name: Keep alive for testing
         run: |
-          echo "Bot is live. Send /status first to wake up polling, then test messages."
+          echo "Bot is live. Send /status first, then test messages."
           sleep 1800
 
       - name: Logs on exit
