@@ -24,7 +24,7 @@ jobs:
       - name: Add openclaw to PATH
         run: echo "$HOME/.npm-global/bin" >> $GITHUB_PATH
 
-      - name: Run non-interactive onboarding with Groq
+      - name: Run non-interactive onboarding
         run: |
           openclaw onboard \
             --non-interactive \
@@ -33,24 +33,26 @@ jobs:
             --auth-choice skip \
             --gateway-port 18789 \
             --gateway-bind loopback \
-            --skip-skills
+            --skip-skills \
+            --no-start
 
       - name: Set Groq as primary model
-        run: openclaw models set groq/llama-3.3-70b-versatile
+        run: openclaw config set agents.defaults.model.primary "groq/llama-3.3-70b-versatile"
 
       - name: Add Telegram channel
         run: |
-          openclaw channels add \
-            --channel telegram \
-            --token $TELEGRAM_BOT_TOKEN
+          openclaw config set channels.telegram.enabled true
+          openclaw config set channels.telegram.botToken "$TELEGRAM_BOT_TOKEN"
+          openclaw config set channels.telegram.dmPolicy "pairing"
 
-      - name: Start gateway
-        run: openclaw gateway start
+      - name: Start gateway in background
+        run: |
+          nohup openclaw gateway start > /tmp/openclaw-gateway.log 2>&1 &
+          echo "Gateway PID: $!"
+          sleep 15
 
       - name: Health check
-        run: |
-          sleep 10
-          openclaw health
+        run: openclaw health
 
       - name: Keep alive for testing
         run: |
@@ -59,4 +61,6 @@ jobs:
 
       - name: Logs on exit
         if: always()
-        run: openclaw logs --limit 100
+        run: |
+          openclaw logs --limit 100 || true
+          cat /tmp/openclaw-gateway.log || true
