@@ -1,34 +1,49 @@
-name: OpenClaw Verification Test
-on: workflow_dispatch
+name: Clawbot Test
+
+on:
+  workflow_dispatch:
 
 jobs:
-  test-bot:
+  run-openclaw:
     runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+    timeout-minutes: 360
 
-      - name: Set up Node.js 22
+    env:
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+
+    steps:
+      - name: Install Node 22
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: '22'
 
       - name: Install OpenClaw
-        # Using -g and forcing the install to ensure binary availability
-        run: npm install -g openclaw@latest
+        run: curl -fsSL https://openclaw.ai/install.sh | bash
 
-      - name: Start OpenClaw & Tunnel
-        env:
-          SETUP_PASSWORD: "admin"
+      - name: Add openclaw to PATH
+        run: echo "$(npm prefix -g)/bin" >> $GITHUB_PATH
+
+      - name: Configure Telegram channel
+        run: openclaw channels add --channel telegram --token $TELEGRAM_BOT_TOKEN
+
+      - name: Set Groq as default model
+        run: openclaw config set agents.defaults.model.primary "groq/llama-3.3-70b-versatile"
+
+      - name: Start gateway
+        run: openclaw gateway start
+
+      - name: Check health
         run: |
-          # Use npx to start the gateway directly. 
-          # This fixes the "command not found" error.
-          npx openclaw gateway start & 
-          
-          # Wait 30 seconds for the server to spin up
-          sleep 30
-          
-          # Create the Pinggy tunnel
-          ssh -p 443 -o StrictHostKeyChecking=no -o ServerAliveInterval=30 \
-              -R0:localhost:18789 qr@free.pinggy.io
-              
+          sleep 10
+          openclaw health
+          openclaw status
+
+      - name: Keep alive for testing
+        run: |
+          echo "Bot is live. Message your Telegram bot now."
+          sleep 1800  # 30 min, change to 21600 for full 6 hours
+
+      - name: Logs on exit
+        if: always()
+        run: openclaw logs --limit 100
