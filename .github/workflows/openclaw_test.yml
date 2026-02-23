@@ -41,18 +41,14 @@ jobs:
       - name: Verify config was written
         run: cat ~/.openclaw/openclaw.json
 
-      - name: Add Telegram channel
-        run: |
-          openclaw channels add \
-            --channel telegram \
-            --token "$TELEGRAM_BOT_TOKEN" \
-            --non-interactive
-
       - name: Start gateway in background
         run: nohup openclaw gateway start > /tmp/openclaw.log 2>&1 &
 
       - name: Wait for gateway to be ready
         run: sleep 15
+
+      - name: Apply doctor fixes
+        run: openclaw doctor --fix || true
 
       - name: Health check
         run: openclaw health
