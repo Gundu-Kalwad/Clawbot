@@ -38,11 +38,11 @@ jobs:
             --gateway-port 18789 \
             --gateway-bind loopback || true
 
-      - name: Verify config was written
-        run: cat ~/.openclaw/openclaw.json
+      - name: Fix extensions permissions
+        run: chmod -R 755 $(npm root -g)/openclaw/extensions
 
       - name: Start gateway in background
-        run: nohup openclaw gateway --allow-unconfigured > /tmp/openclaw.log 2>&1 &
+        run: nohup openclaw gateway > /tmp/openclaw.log 2>&1 &
 
       - name: Wait for gateway to be ready
         run: sleep 15
@@ -58,5 +58,4 @@ jobs:
       - name: Logs on exit
         if: always()
         run: |
-          openclaw logs --limit 100 || true
           cat /tmp/openclaw.log || true
