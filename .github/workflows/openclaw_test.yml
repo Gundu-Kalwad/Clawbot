@@ -47,8 +47,11 @@ jobs:
       - name: Wait for gateway to be ready
         run: sleep 15
 
-      - name: Health check
-        run: openclaw health
+      - name: Apply doctor fixes
+        run: openclaw doctor --fix
+
+      - name: Wait for Telegram to connect
+        run: sleep 10
 
       - name: Keep alive for testing
         run: |
@@ -57,5 +60,4 @@ jobs:
 
       - name: Logs on exit
         if: always()
-        run: |
-          cat /tmp/openclaw.log || true
+        run: cat /tmp/openclaw.log || true
